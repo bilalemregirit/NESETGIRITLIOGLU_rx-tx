@@ -1,0 +1,70 @@
+#include <SPI.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+
+const int trigPin = 8;
+const int echoPin = 7;
+long duration;
+int distance;
+
+RF24 radio(9,10); // CE, CSN
+
+struct veri {
+byte ch1;
+byte ch2;
+};
+
+veri paket_veri;
+
+const byte address[6] = "00001";
+void setup() {
+  radio.begin();
+  radio.setAutoAck(false);
+  radio.setDataRate(RF24_250KBPS);
+  radio.openWritingPipe(address);
+  radio.setPALevel(RF24_PA_MIN);
+  radio.stopListening();
+  
+   pinMode(trigPin, OUTPUT); 
+   pinMode(echoPin, INPUT); 
+   pinMode(2,OUTPUT);
+   pinMode(4,OUTPUT);
+   Serial.begin(9600);
+}
+void loop() {
+
+//-----------SENSÖR-BASLANGIC-------------
+
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  duration = pulseIn(echoPin, HIGH);
+  distance= duration*0.034/2;
+  
+//--------------SENSOR-BITTI---------------
+
+//--------------VERİ-AKTARIM--------------
+   paket_veri.ch1 = distance;
+   paket_veri.ch2 = 1; 
+  
+   radio.write(&paket_veri , sizeof(veri));
+   digitalWrite(4,LOW);
+   delay(30);
+   digitalWrite(4,HIGH);
+//-----------VERİ-AKTARIM-BİTTİ-------------
+
+    //---------------LED-DENEMELER-----------------
+     if(distance > 20 && distance < 30)
+     {
+      digitalWrite(2,HIGH);
+     }
+     else
+     {
+      digitalWrite(2,LOW);
+     }
+    //---------------LED-DENEMELER-----------------
+    
+Serial.println(distance);
+}
